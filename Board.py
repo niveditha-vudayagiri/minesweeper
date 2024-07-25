@@ -4,13 +4,8 @@ import random
 import pickle
 
 class Board:
-    def __init__(self):
-        #Choose difficulty level
-        level = input("Choose difficult level \n1-BEGINNER \n2-MODERATE \n3-DIFFICULT \n")
-        
-        print("You selected level "+level)
-        selected_level = Level(int(level))
-        self.chooseDifficultyLevel(selected_level)
+    def __init__(self, level):
+        self.chooseDifficultyLevel(level)
 
         self.board = [[Cell() for _ in range(self.cols)] for _ in range(self.rows)]
         self._place_mines()
@@ -34,8 +29,6 @@ class Board:
             self.rows = 5
             self.cols = 5
             self.mines = 5
-
-        print('You have '+str(self.mines)+' mines💣 to find! Good luck 👍🏼')
 
     def _place_mines(self):
         mine_positions = random.sample(range(self.rows * self.cols), self.mines)
@@ -67,23 +60,14 @@ class Board:
     def flag_cell(self, row, col):
         self.board[row][col].is_flagged = not self.board[row][col].is_flagged
 
-    def display_board(self, reveal_all=False):
-        print("- "*self.cols)
+    # def display_board(self, reveal_all=False):
+    #     print("- "*self.cols)
 
-        for row in self.board:
-            for cell in row:
-                if reveal_all:
-                    cell.is_revealed = True
-                print(cell, end=' ')
-            print()
+    #     for row in self.board:
+    #         for cell in row:
+    #             if reveal_all:
+    #                 cell.is_revealed = True
+    #             print(cell, end=' ')
+    #         print()
         
-        print("- "*self.cols)
-
-    def save_game(self, filename):
-        with open(filename, 'wb') as f:
-            pickle.dump(self, f)
-
-    @staticmethod
-    def load_game(filename):
-        with open(filename, 'rb') as f:
-            return pickle.load(f)
+    #     print("- "*self.cols)
