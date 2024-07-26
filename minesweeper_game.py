@@ -1,13 +1,16 @@
 import tkinter as tk
 from Board import Board
 from tkinter import messagebox
-from tkmacosx import Button
 import pickle
+from datetime import datetime
 
 class MinesweeperGame(tk.Frame):
     def __init__(self, parent, controller, level=None, board=None):
         super().__init__(parent)
         self.controller = controller
+        self.elapsed_time = 0
+        self.running = False
+
         self.flag_mode = False  # Flag mode state
         if board:
             self.board = board
@@ -15,10 +18,14 @@ class MinesweeperGame(tk.Frame):
             self.board = Board(level)
         self.buttons = [[None for _ in range(self.board.cols)] for _ in range(self.board.rows)]
         self.create_widgets()
+        self.start_stopwatch()
 
     def create_widgets(self):
         self.flag_button = tk.Button(self, text="Click To Enable 🚩 Mode", command=self.toggle_flag_mode, bg="SystemButtonFace")
-        self.flag_button.grid(row=0, column=0, columnspan=self.board.cols, pady=10, sticky='ew')
+        self.flag_button.grid(row=0, column=0, columnspan=self.board.cols//2, pady=10)
+
+        self.stopwatch_label = tk.Label(self, text="00:00:00", fg="black") 
+        self.stopwatch_label.grid(row=0, column=self.board.cols//2,columnspan=self.board.cols//2, pady=10, sticky='ew')
 
         for r in range(self.board.rows):
             for c in range(self.board.cols):
@@ -48,12 +55,14 @@ class MinesweeperGame(tk.Frame):
         self.update_buttons()
         if self.board.board[row][col].has_mine:
             self.show_all()
+            self.stop_stopwatch()
             messagebox.showinfo("Game Over", "You hit a mine!")
-            self.controller.show_frame('MainMenu')
+            #self.controller.show_frame('MainMenu')
         elif self.check_win():
             self.show_all()
-            messagebox.showinfo("Congratulations", "You win!")
-            self.controller.show_frame('MainMenu')
+            self.stop_stopwatch()
+            messagebox.showinfo("Congratulations", f"You win!\n\n You completed the round in {self.get_runningtime()}")
+            #self.controller.show_frame('MainMenu')
 
     def flag(self, row, col):
         self.board.flag_cell(row, col)
@@ -67,6 +76,7 @@ class MinesweeperGame(tk.Frame):
                 if cell.is_revealed:
                     if cell.has_mine:
                         btn.config(text="💣", bg="red")
+                        self.stop_stopwatch()
                     else:
                         btn.config(text=str(cell.adjacent_mines), bg="lightgrey")
                 elif cell.is_flagged:
@@ -97,3 +107,24 @@ class MinesweeperGame(tk.Frame):
         with open("saved_game.pkl", "rb") as f:
             self.board = pickle.load(f)
         self.update_buttons()
+
+    def start_stopwatch(self):
+        self.running = True
+        self.update_stopwatch()
+
+    def stop_stopwatch(self):
+        self.running = False
+
+    def get_runningtime(self):
+        hours, remainder = divmod(self.elapsed_time, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"Time: {hours:02}:{minutes:02}:{seconds:02}"
+
+    def update_stopwatch(self):
+        if self.running:
+            self.elapsed_time += 1
+            hours, remainder = divmod(self.elapsed_time, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            time_format = f"Time: {hours:02}:{minutes:02}:{seconds:02}"
+            self.stopwatch_label.config(text=self.get_runningtime())
+            self.after(1000, self.update_stopwatch)
